@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Network Intrusion Detection System</title>
+    <style>
+        :root {
+            --bg: #07111f;
+            --panel: #0f1d2d;
+            --panel-2: #13273d;
+            --accent: #4dd0e1;
+            --primary: #5eead4;
+            --warning: #fbbf24;
+            --danger: #f87171;
+            --text: #e5f3ff;
+            --muted: #9fb6c8;
+            --border: rgba(255, 255, 255, 0.08);
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            font-family: Arial, Helvetica, sans-serif;
+            background: linear-gradient(135deg, var(--bg), #0b1626 45%, #0f2438);
+            color: var(--text);
+        }
+
+        .container {
+            width: min(1200px, 92%);
+            margin: 0 auto;
+            padding-bottom: 40px;
+        }
+
+        .hero {
+            padding: 36px 0 18px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .title {
+            margin: 0;
+            font-size: clamp(2rem, 3vw, 3.1rem);
+            letter-spacing: 1px;
+        }
+
+        .subtitle {
+            margin-top: 10px;
+            color: var(--muted);
+            max-width: 720px;
+            line-height: 1.6;
+        }
+
+        .status-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 14px;
+            margin-top: 22px;
+        }
+
+        .pill {
+            border: 1px solid var(--border);
+            background: rgba(77, 208, 225, 0.08);
+            padding: 8px 16px;
+            border-radius: 999px;
+            color: var(--accent);
+            font-size: 0.92rem;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 18px;
+            margin-top: 28px;
+        }
+
+        .card {
+            background: rgba(19, 39, 61, 0.82);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 18px 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+        }
+
+        .metric {
+            font-size: 2.1rem;
+            font-weight: bold;
+            margin: 10px 0 4px;
+        }
+
+        .metric-label {
+            color: var(--muted);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        .high { color: var(--danger); }
+        .medium { color: var(--warning); }
+        .low { color: var(--primary); }
+
+        .chart-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 18px;
+        }
+
+        .chart-card {
+            min-height: 260px;
+        }
+
+        .scan-port-list {
+            max-height: 250px;
+            overflow: auto;
+        }
+
+        .scan-status {
+            min-height: 24px;
+            color: var(--muted);
+            margin: 0 0 10px;
+        }
+
+        .chart-title {
+            margin-bottom: 12px;
+            font-weight: bold;
+            color: var(--text);
+        }
+
+        canvas {
+            width: 100%;
+            height: 220px;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 10px;
+            border: 1px solid var(--border);
+        }
+
+        .section {
+            margin-top: 34px;
+        }
+
+        .section h2 {
+            margin: 0 0 18px;
+            font-size: clamp(1.4rem, 2vw, 2rem);
+        }
+
+        .steps {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+            gap: 18px;
+        }
+
+        .step {
+            padding: 18px;
+            background: rgba(15, 29, 45, 0.9);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+        }
+
+        .step-number {
+            display: inline-block;
+            width: 38px;
+            height: 38px;
+            line-height: 38px;
+            text-align: center;
+            background: var(--accent);
+            color: #02131d;
+            border-radius: 50%;
+            font-weight: bold;
+            margin-bottom: 14px;
+        }
+
+        .step h3 {
+            margin: 0 0 8px;
+        }
+
+        .step p {
+            margin: 0;
+            color: var(--muted);
+            line-height: 1.6;
+        }
+
+        .alert-wrap {
+            margin-top: 20px;
+            background: rgba(15, 29, 45, 0.95);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        .alert-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 18px 20px;
+            border-bottom: 1px solid var(--border);
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .alert-header h3 {
+            margin: 0;
+        }
+
+        .live-dot {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--primary);
+            font-weight: bold;
+        }
+
+        .live-dot::before {
+            content: "";
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #34d399;
+            box-shadow: 0 0 12px #34d399;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 14px 18px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+            vertical-align: top;
+        }
+
+        th {
+            color: var(--muted);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .severity {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            letter-spacing: 0.04em;
+        }
+
+        .severity.HIGH { background: rgba(248, 113, 113, 0.12); color: #fecaca; }
+        .severity.MEDIUM { background: rgba(251, 191, 36, 0.12); color: #fde68a; }
+        .severity.LOW { background: rgba(94, 234, 212, 0.12); color: #bbf7d0; }
+
+        .empty {
+            color: var(--muted);
+            padding: 30px 20px;
+            text-align: center;
+        }
+
+        @media (max-width: 640px) {
+            .alert-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+
+            th, td {
+                padding: 12px 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="hero">
+            <h1 class="title">Network Intrusion Detection System</h1>
+            <p class="subtitle">
+                Suricata monitors live network traffic while Nmap checks this computer's TCP and UDP ports.
+                The dashboard displays sensor alerts and scan results as they arrive.
+            </p>
+
+            <div class="status-row">
+                <span class="pill">Suricata Live Sensor</span>
+                <span class="pill">Nmap Local Scan</span>
+                <span class="pill">Detection Only</span>
+            </div>
+        </header>
+
+        <section class="grid">
+            <div class="card">
+                <div class="metric-label">Total Alerts</div>
+                <div class="metric" id="totalAlerts">0</div>
+            </div>
+            <div class="card">
+                <div class="metric-label">High Severity</div>
+                <div class="metric high" id="highAlerts">0</div>
+            </div>
+            <div class="card">
+                <div class="metric-label">Medium Severity</div>
+                <div class="metric medium" id="mediumAlerts">0</div>
+            </div>
+            <div class="card">
+                <div class="metric-label">Low Severity</div>
+                <div class="metric low" id="lowAlerts">0</div>
+            </div>
+            <div class="card">
+                <div class="metric-label">Alert Sources</div>
+                <div class="metric low" id="alertSources">0</div>
+            </div>
+        </section>
+
+        <section class="section chart-grid">
+            <div class="card chart-card">
+                <div class="chart-title">Real-time Activity</div>
+                <canvas id="activityChart" width="520" height="220"></canvas>
+            </div>
+            <div class="card chart-card">
+                <div class="chart-title">Severity Distribution</div>
+                <canvas id="severityChart" width="320" height="220"></canvas>
+            </div>
+        </section>
+
+        <section class="section chart-grid">
+            <div class="card chart-card">
+                <div class="chart-title">Local Port Scan · TCP + UDP 1–65,535</div>
+                <div class="metric" id="scanOpenCount">--</div>
+                <div class="metric-label">Open TCP and UDP ports on 127.0.0.1</div>
+                <canvas id="portScanChart" width="520" height="220"></canvas>
+            </div>
+            <div class="card chart-card">
+                <div class="chart-title">Open Ports</div>
+                <p class="scan-status" id="scanCompleted">No completed scan yet</p>
+                <div class="scan-port-list">
+                    <table>
+                        <thead>
+                            <tr><th>Port</th><th>Protocol</th><th>Service</th></tr>
+                        </thead>
+                        <tbody id="scanPortRows"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <div class="alert-wrap">
+                <div class="alert-header">
+                    <h3>Live Attack Feed</h3>
+                    <span class="live-dot" id="lastUpdated">Monitoring...</span>
+                </div>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Time</th>
+                            <th>Threat</th>
+                            <th>Severity</th>
+                            <th>Source</th>
+                            <th>Destination</th>
+                            <th>Detail</th>
+                        </tr>
+                    </thead>
+                    <tbody id="alertRows"></tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        const status = document.getElementById('lastUpdated');
+
+        function drawActivityChart(alerts) {
+            const canvas = document.getElementById('activityChart');
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            const labels = ['-7', '-6', '-5', '-4', '-3', '-2', '-1', 'Now'];
+            const points = Array(8).fill(0);
+
+            alerts.forEach(alert => {
+                const time = new Date(alert.timestamp.replace(' ', 'T')).getTime();
+                const diffSeconds = Math.max(0, (Date.now() - time) / 1000);
+                const index = Math.min(7, Math.floor(diffSeconds / 10));
+                if (index >= 0 && index < 8) {
+                    points[7 - index] += 1;
+                }
+            });
+
+            const maxVal = Math.max(5, ...points);
+            const padding = 30;
+            const chartHeight = canvas.height - padding * 2;
+            const chartWidth = canvas.width - padding * 2;
+
+            ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+            ctx.lineWidth = 1;
+            for (let i = 0; i <= 4; i++) {
+                const y = padding + (chartHeight / 4) * i;
+                ctx.beginPath();
+                ctx.moveTo(padding, y);
+                ctx.lineTo(canvas.width - padding, y);
+                ctx.stroke();
+            }
+
+            ctx.beginPath();
+            ctx.moveTo(padding, padding);
+            ctx.lineTo(padding, canvas.height - padding);
+            ctx.lineTo(canvas.width - padding, canvas.height - padding);
+            ctx.strokeStyle = 'rgba(255,255,255,0.28)';
+            ctx.stroke();
+
+            ctx.beginPath();
+            points.forEach((value, idx) => {
+                const x = padding + (chartWidth / (labels.length - 1)) * idx;
+                const y = canvas.height - padding - (value / maxVal) * chartHeight;
+                if (idx === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            });
+            ctx.lineWidth = 2.5;
+            ctx.strokeStyle = '#4dd0e1';
+            ctx.stroke();
+
+            points.forEach((value, idx) => {
+                const x = padding + (chartWidth / (labels.length - 1)) * idx;
+                const y = canvas.height - padding - (value / maxVal) * chartHeight;
+                ctx.beginPath();
+                ctx.arc(x, y, 3, 0, Math.PI * 2);
+                ctx.fillStyle = '#5eead4';
+                ctx.fill();
+            });
+
+            ctx.fillStyle = '#9fb6c8';
+            ctx.font = '12px Arial';
+            labels.forEach((label, idx) => {
+                const x = padding + (chartWidth / (labels.length - 1)) * idx;
+                ctx.fillText(label, x - 10, canvas.height - 8);
+            });
+        }
+
+        function drawSeverityChart(alerts) {
+            const canvas = document.getElementById('severityChart');
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            const counts = { HIGH: 0, MEDIUM: 0, LOW: 0 };
+            alerts.forEach(alert => {
+                const severity = (alert.severity || 'LOW').toUpperCase();
+                if (counts[severity] !== undefined) counts[severity] += 1;
+            });
+
+            const values = [counts.HIGH, counts.MEDIUM, counts.LOW];
+            const colors = ['#f87171', '#fbbf24', '#5eead4'];
+            const labels = ['High', 'Medium', 'Low'];
+            const maxVal = Math.max(1, ...values);
+            const chartWidth = canvas.width - 50;
+            const chartHeight = canvas.height - 40;
+
+            ctx.fillStyle = '#9fb6c8';
+            ctx.font = '12px Arial';
+            labels.forEach((label, idx) => {
+                const x = 25 + idx * 90;
+                const barHeight = (values[idx] / maxVal) * (chartHeight - 20);
+                const y = canvas.height - 20 - barHeight;
+
+                ctx.fillStyle = colors[idx];
+                ctx.fillRect(x, y, 38, barHeight);
+
+                ctx.fillStyle = '#e5f3ff';
+                ctx.fillText(label, x + 2, canvas.height - 8);
+                ctx.fillText(String(values[idx]), x + 5, y - 8);
+            });
+        }
+
+        function drawPortScanChart(scan) {
+            const canvas = document.getElementById('portScanChart');
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            const tcpBuckets = Array(64).fill(0);
+            const udpBuckets = Array(64).fill(0);
+            (scan.open_ports || []).forEach(item => {
+                const bucket = Math.min(63, Math.floor((item.port - 1) / 1024));
+                const values = item.protocol === 'udp' ? udpBuckets : tcpBuckets;
+                values[bucket] += 1;
+            });
+
+            const padding = 28;
+            const chartWidth = canvas.width - padding * 2;
+            const chartHeight = canvas.height - padding * 2;
+            const maxValue = Math.max(1, ...tcpBuckets.map((value, index) => value + udpBuckets[index]));
+
+            ctx.strokeStyle = 'rgba(255,255,255,0.16)';
+            for (let line = 0; line <= 4; line++) {
+                const y = padding + chartHeight * line / 4;
+                ctx.beginPath();
+                ctx.moveTo(padding, y);
+                ctx.lineTo(canvas.width - padding, y);
+                ctx.stroke();
+            }
+
+            const slotWidth = chartWidth / tcpBuckets.length;
+            tcpBuckets.forEach((tcpValue, index) => {
+                const udpValue = udpBuckets[index];
+                const tcpHeight = tcpValue / maxValue * (chartHeight - 4);
+                const udpHeight = udpValue / maxValue * (chartHeight - 4);
+                const x = padding + index * slotWidth;
+                const udpY = canvas.height - padding - udpHeight;
+                const tcpY = udpY - tcpHeight;
+                ctx.fillStyle = '#fbbf24';
+                ctx.fillRect(x + 1, udpY, Math.max(1, slotWidth - 2), udpHeight);
+                ctx.fillStyle = '#4dd0e1';
+                ctx.fillRect(x + 1, tcpY, Math.max(1, slotWidth - 2), tcpHeight);
+            });
+
+            ctx.fillStyle = '#9fb6c8';
+            ctx.font = '11px Arial';
+            ctx.fillStyle = '#4dd0e1';
+            ctx.fillRect(canvas.width - 115, 8, 9, 9);
+            ctx.fillStyle = '#e5f3ff';
+            ctx.fillText('TCP', canvas.width - 102, 17);
+            ctx.fillStyle = '#fbbf24';
+            ctx.fillRect(canvas.width - 65, 8, 9, 9);
+            ctx.fillStyle = '#e5f3ff';
+            ctx.fillText('UDP', canvas.width - 52, 17);
+            ctx.fillStyle = '#9fb6c8';
+            for (let index = 0; index < 64; index += 8) {
+                const x = padding + index * slotWidth;
+                ctx.fillText(String(index * 1024 + 1), x, canvas.height - 8);
+            }
+        }
+
+        async function loadPortScan() {
+            try {
+                const response = await fetch('/api/port-scan', { cache: 'no-store' });
+                const scan = await response.json();
+                const ports = scan.open_ports || [];
+                const completed = document.getElementById('scanCompleted');
+                const portRows = document.getElementById('scanPortRows');
+                const durationText = Number.isFinite(scan.duration_seconds)
+                    ? ` · ${scan.duration_seconds}s`
+                    : '';
+
+                drawPortScanChart(scan);
+                document.getElementById('scanOpenCount').textContent = ports.length;
+
+                if (scan.state === 'scanning') {
+                    if (scan.completed_at) {
+                        completed.textContent = `Last completed ${new Date(scan.completed_at).toLocaleTimeString()}${durationText}`;
+                    }
+                } else if (scan.state === 'complete') {
+                    completed.textContent = `Finished ${new Date(scan.completed_at).toLocaleTimeString()}${durationText}`;
+                } else if (scan.state === 'error') {
+                    completed.textContent = `Scan error: ${scan.error || 'Nmap failed'}`;
+                }
+
+                portRows.replaceChildren();
+                if (ports.length === 0 && scan.state !== 'scanning') {
+                    const row = document.createElement('tr');
+                    const cell = document.createElement('td');
+                    cell.colSpan = 3;
+                    cell.className = 'empty';
+                    cell.textContent = 'No open TCP or UDP ports found';
+                    row.appendChild(cell);
+                    portRows.appendChild(row);
+                } else {
+                    ports.forEach(item => {
+                        const row = document.createElement('tr');
+                        [item.port, item.protocol, item.service].forEach(value => {
+                            const cell = document.createElement('td');
+                            cell.textContent = String(value);
+                            row.appendChild(cell);
+                        });
+                        portRows.appendChild(row);
+                    });
+                }
+            } catch (error) {
+                document.getElementById('scanCompleted').textContent = 'Scan status unavailable';
+            }
+        }
+
+        async function loadAlerts() {
+            try {
+                const response = await fetch('/api/alerts');
+                const data = await response.json();
+
+                document.getElementById('totalAlerts').textContent = data.total_alerts || 0;
+                document.getElementById('highAlerts').textContent = data.high || 0;
+                document.getElementById('mediumAlerts').textContent = data.medium || 0;
+                document.getElementById('lowAlerts').textContent = data.low || 0;
+                document.getElementById('alertSources').textContent = data.alert_sources || 0;
+
+                const rows = document.getElementById('alertRows');
+                rows.innerHTML = '';
+
+                const alerts = data.alerts || [];
+                if (alerts.length === 0) {
+                    rows.innerHTML = '<tr><td colspan="6" class="empty">No Suricata rules matched. Localhost port-scan results are shown above.</td></tr>';
+                    drawActivityChart([]);
+                    drawSeverityChart([]);
+                    status.textContent = 'Live monitoring';
+                    return;
+                }
+
+                alerts.forEach(alert => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${alert.timestamp || 'N/A'}</td>
+                        <td>${alert.name || 'Unknown Event'}</td>
+                        <td><span class="severity ${alert.severity || 'LOW'}">${alert.severity || 'LOW'}</span></td>
+                        <td>${alert.src_ip || 'Unknown'}</td>
+                        <td>${alert.dst_ip || 'Unknown'}</td>
+                        <td>${alert.detail || 'No details available'}</td>
+                    `;
+                    rows.appendChild(row);
+                });
+
+                drawActivityChart(alerts);
+                drawSeverityChart(alerts);
+
+                const now = new Date();
+                status.textContent = `Live • Updated ${now.toLocaleTimeString()}`;
+            } catch (error) {
+                console.error('Failed to load alerts:', error);
+                status.textContent = 'Connection error';
+            }
+        }
+
+        drawActivityChart([]);
+        drawSeverityChart([]);
+        loadAlerts();
+        loadPortScan();
+        setInterval(loadAlerts, 3000);
+        setInterval(loadPortScan, 3000);
+    </script>
+</body>
+</html>

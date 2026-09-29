@@ -1,0 +1,38 @@
+{
+    "rules": [
+        {
+            "id": 1,
+            "name": "Port Scan Detected",
+            "protocol": "TCP",
+            "condition": "port_scan",
+            "threshold": 15,
+            "window_seconds": 10,
+            "severity": "HIGH"
+        },
+        {
+            "id": 2,
+            "name": "Ping Sweep Detected",
+            "protocol": "ICMP",
+            "condition": "ping_sweep",
+            "threshold": 10,
+            "window_seconds": 10,
+            "severity": "MEDIUM"
+        },
+        {
+            "id": 3,
+            "name": "Suspicious Port Access",
+            "protocol": "TCP",
+            "condition": "suspicious_port",
+            "ports": [23, 445, 3389, 4444],
+            "severity": "HIGH"
+        },
+        {
+            "id": 4,
+            "name": "Suspicious HTTP Keyword",
+            "protocol": "HTTP",
+            "condition": "http_keyword",
+            "keywords": ["passwd", "etc/shadow", "admin.php"],
+            "severity": "MEDIUM"
+        }
+    ]
+}

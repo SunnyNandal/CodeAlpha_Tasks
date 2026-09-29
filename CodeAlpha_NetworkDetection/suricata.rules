@@ -1,0 +1,6 @@
+alert tcp any any -> $HOME_NET 23 (msg:"NIDS suspicious Telnet service access"; flags:S; priority:1; sid:1000001; rev:1;)
+alert tcp any any -> $HOME_NET 445 (msg:"NIDS suspicious SMB service access"; flags:S; priority:1; sid:1000002; rev:1;)
+alert tcp any any -> $HOME_NET 3389 (msg:"NIDS suspicious RDP service access"; flags:S; priority:1; sid:1000003; rev:1;)
+alert tcp any any -> $HOME_NET 4444 (msg:"NIDS suspicious high-risk service access"; flags:S; priority:1; sid:1000004; rev:1;)
+alert tcp $EXTERNAL_NET any -> $HOME_NET any (msg:"NIDS possible inbound TCP SYN port scan"; flags:S; flow:stateless; threshold:type both, track by_src, count 15, seconds 10; priority:2; sid:1000005; rev:2;)
+alert http any any -> $HOME_NET any (msg:"NIDS suspicious admin endpoint request"; flow:established,to_server; http.uri; content:"/admin.php"; nocase; priority:2; sid:1000006; rev:1;)
